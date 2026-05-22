@@ -53,7 +53,7 @@ Please append a semicolon ";" at the end of the query and enter your query in a 
 SELECT 
     h.hacker_id, 
     h.name, 
-    SUM(m.max_score) AS total_score
+    SUM(ms.max_score) AS total_score
 FROM 
     Hackers h
 JOIN (
