@@ -110,3 +110,4 @@ WHEN g.Grade >= 8 THEN s.Name
         WHEN g.Grade < 8 THEN s.Marks 
     END ASC;
 go
+
