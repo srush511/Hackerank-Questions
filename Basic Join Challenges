@@ -149,3 +149,98 @@ END
 -- Remove the trailing ampersand and print
 PRINT SUBSTRING(@result, 1, LEN(@result) - 1);
 go
+
+/*
+Pivot the Occupation column in OCCUPATIONS so that each Name is sorted alphabetically 
+and displayed underneath its corresponding Occupation. 
+The output should consist of four columns (Doctor, Professor, Singer, and Actor) in that 
+specific order, with their respective names listed alphabetically under each column.
+
+Note: Print NULL when there are no more names corresponding to an occupation.
+*/
+
+### OUTPUT 
+
+SELECT 
+    MIN(CASE WHEN Occupation = 'Doctor' THEN Name END) AS Doctor,
+    MIN(CASE WHEN Occupation = 'Professor' THEN Name END) AS Professor,
+    MIN(CASE WHEN Occupation = 'Singer' THEN Name END) AS Singer,
+    MIN(CASE WHEN Occupation = 'Actor' THEN Name END) AS Actor
+FROM (
+    SELECT 
+        Name,
+        Occupation,
+        ROW_NUMBER() OVER (PARTITION BY Occupation ORDER BY Name) AS row_num
+    FROM OCCUPATIONS
+) AS pivoted_occupations
+GROUP BY row_num;
+GO
+
+
+/*
+You are given a table, BST, containing two columns: N and P, where N represents the value of a node in Binary Tree,
+and P is the parent of N.
+Write a query to find the node type of Binary Tree ordered by the value of the node. Output one of the following for each node:
+
+Root: If node is root node.
+Leaf: If node is leaf node.
+Inner: If node is neither root nor leaf node.
+*/
+
+## OUTPUT
+
+SELECT N,
+CASE 
+WHEN P IS NULL THEN 'Root'
+WHEN (select  count(*)from BST WHERE P = B.N) >0 THEN 'Inner'
+--WHEN N IN (SELECT P FROM BST) THEN 'Inner'
+ELSE 'Leaf'
+end 
+from BST B
+
+ORDER BY N
+GO
+
+
+/*
+Given the table schemas below, write a query to print the company_code, founder name, 
+total number of lead managers, total number of senior managers, total number of managers,
+and total number of employees. Order your output by ascending company_code.
+Note:
+The tables may contain duplicate records.
+The company_code is string, so the sorting should not be numeric. For example, 
+if the company_codes are C_1, C_2, and C_10, then the ascending company_codes will be C_1, C_10, and C_2.
+*/
+
+## OUTPUT
+
+SELECT C.COMPANY_CODE,C.FOUNDER,COUNT(DISTINCT LM.LEAD_MANAGER_CODE),COUNT(DISTINCT SM.SENIOR_MANAGER_CODE),COUNT(DISTINCT M.MANAGER_CODE),COUNT(DISTINCT E.EMPLOYEE_CODE) FROM COMPANY C
+INNER JOIN LEAD_MANAGER LM ON C.COMPANY_CODE =LM.COMPANY_CODE
+INNER JOIN SENIOR_MANAGER SM ON LM.COMPANY_CODE =SM.COMPANY_CODE
+INNER JOIN MANAGER M ON SM.COMPANY_CODE = M.COMPANY_CODE
+INNER JOIN EMPLOYEE E ON M.COMPANY_CODE =E.COMPANY_CODE
+GROUP BY c.company_code, c.founder
+ORDER BY C.COMPANY_CODE
+GO
+
+
+/*
+You are given three tables: Students, Friends and Packages. 
+Students contains two columns: ID and Name. 
+Friends contains two columns: ID and Friend_ID (ID of the ONLY best friend). 
+Packages contains two columns: ID and Salary (offered salary in $ thousands per month).
+
+Write a query to output the names of those students whose best friends got offered a higher salary than them. 
+Names must be ordered by the salary amount offered to the best friends. 
+It is guaranteed that no two students got same salary offer.
+*/
+
+## OUTPUT
+
+select S.NAME from Students S 
+inner join Friends F ON S.ID = F.ID
+inner join Packages PS ON S.ID = PS.ID
+inner join Packages PF ON F.Friend_ID =PF.ID
+WHERE PF.SALARY > PS.SALARY
+ORDER BY PF.SALARY
+GO
