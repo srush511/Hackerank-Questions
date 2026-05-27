@@ -244,3 +244,26 @@ inner join Packages PF ON F.Friend_ID =PF.ID
 WHERE PF.SALARY > PS.SALARY
 ORDER BY PF.SALARY
 GO
+
+
+/*
+You are given a table, Functions, containing two columns: X and Y.
+Two pairs (X1, Y1) and (X2, Y2) are said to be symmetric pairs if X1 = Y2 and X2 = Y1.
+Write a query to output all such symmetric pairs in ascending order by the value of X.
+List the rows such that X1 ≤ Y1.
+*/
+
+## OUTPUT
+
+select distinct F1.X, F1.Y
+from
+FUNCTIONS F1
+join
+FUNCTIONS F2 on F1.X = F2.Y and F1.Y = F2.X
+where F1.X <= F1.Y
+group by F1.X , F1.Y
+HAVING (count(F1.X )>1 
+and F1.X= F1.Y) or F1.X !=F1.Y
+order by F1.X
+go
+  
