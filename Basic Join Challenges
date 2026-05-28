@@ -266,4 +266,198 @@ HAVING (count(F1.X )>1
 and F1.X= F1.Y) or F1.X !=F1.Y
 order by F1.X
 go
-  
+
+
+
+/*
+Samantha interviews many candidates from different colleges using coding challenges and contests.
+Write a query to print the contest_id, hacker_id, name, and the sums of total_submissions, 
+total_accepted_submissions, total_views, and total_unique_views for each contest sorted by contest_id. 
+Exclude the contest from the result if all four sums are .
+*/
+
+
+##OUTPUT
+
+select 
+C.CONTEST_ID,C.HACKER_ID,C.NAME,
+SUM(SS.TOTAL_SUBMISSIONS),
+SUM(SS.TOTAL_ACCEPTED_SUBMISSIONS),
+SUM(VS.TOTAL_VIEWS),
+SUM(VS.TOTAL_UNIQUE_VIEWS)
+ from Contests C
+join Colleges COL ON C.CONTEST_ID = COL.CONTEST_ID
+JOIN CHALLENGES CHA ON COL.COLLEGE_ID = CHA.COLLEGE_ID
+LEFT JOIN (
+    SELECT challenge_id, SUM(total_submissions) AS total_submissions, SUM(total_accepted_submissions) AS total_accepted_submissions
+    FROM Submission_Stats GROUP BY challenge_id
+) ss ON cha.challenge_id = ss.challenge_id
+LEFT JOIN (
+    SELECT challenge_id, SUM(total_views) AS total_views, SUM(total_unique_views) AS total_unique_views
+    FROM View_Stats GROUP BY challenge_id
+) vs ON cha.challenge_id = vs.challenge_id
+GROUP BY C.contest_id, C.hacker_id, c.name
+HAVING (SUM(SS.total_submissions) + SUM(SS.total_accepted_submissions) + SUM(VS.total_views) + SUM(VS.total_unique_views)) > 0
+
+ORDER BY C.CONTEST_ID
+
+
+go
+
+/*
+Julia conducted a  days of learning SQL contest. The start date of the contest was March 01, 2016 and the end date was March 15, 2016.
+
+Write a query to print total number of unique hackers who made at least  submission each day 
+(starting on the first day of the contest), and find the hacker_id and name of the hacker who made 
+maximum number of submissions each day. If more than one such hacker has a maximum number of submissions, print the lowest hacker_id.
+The query should print this information for each day of the contest, sorted by the date.
+*/
+
+
+## OUTPUT
+
+Solution
+To approach this problem effectively, it's crucial to recognize that it involves two distinct challenges, 
+each requiring a different set of logical skills. However, both complexities can be simplified by initially
+aggregating the submission data by date and hacker, creating a foundational auxiliary table for subsequent operations.
+
+The first, more straightforward challenge involves identifying the hacker with the most submissions each day.
+This can be accomplished by sorting hackers within each date based on submission counts descending and hacker 
+IDs ascending, consistently selecting the top-ranked hacker for each submission date block.
+
+Conversely, the second challenge, which demands tracking the count of hackers submitting daily, 
+is more intricate. To tackle this, the chosen approach utilizes window functions to streamline the task of
+calculating consecutive submission days for each hacker. This involves employing DENSE_RANK to determine the 
+index of the submission day's and comparing it to the ROW_NUMBER for a given hacker_id for this date. It's 
+important to note that this approach assumes at least one hacker submits every day; otherwise, DENSE_RANK may 
+not function as intended. Additionally, while DATEPART could replace DENSE_RANK under the specific conditions 
+of this problem where dates begin at the month's first day, it would result in a less versatile solution that 
+would not work if start or end dates change.
+Finally, the solution integrates all components and incorporates the hackers' table to extract their names, completing the task.
+
+
+SET NOCOUNT ON;
+
+/*
+Enter your query here.
+Please append a semicolon ";" at the end of the query and enter your query in a single line to avoid error.
+*/
+WITH daily_subs AS (
+        SELECT hacker_id, submission_date, COUNT(*) AS num_subs
+        FROM submissions
+        GROUP BY hacker_id, submission_date),
+    
+    all_days_subs AS (
+        SELECT submission_date, hacker_id
+        FROM (SELECT submission_date, 
+                     hacker_id,
+                     DENSE_RANK() OVER(ORDER BY submission_date ASC) AS day_num, 
+                     ROW_NUMBER() OVER (PARTITION BY hacker_id
+                                        ORDER BY submission_date ASC) AS streak
+              FROM daily_subs) AS streak_check
+        WHERE day_num = streak),
+        
+    num_all_day_subs AS (
+        SELECT submission_date, COUNT(*) AS num_subs
+        FROM all_days_subs
+        GROUP BY submission_date),
+    
+    daily_ranking AS (
+        SELECT submission_date, hacker_id,
+               ROW_NUMBER() OVER(PARTITION BY submission_date 
+                                 ORDER BY num_subs DESC, hacker_id ASC) AS rank
+        FROM daily_subs),
+    
+    daily_winners AS (
+        SELECT submission_date, hacker_id
+        FROM daily_ranking
+        WHERE rank = 1)
+
+-- Main query
+SELECT ads.submission_date, num_subs, h.hacker_id, name
+FROM num_all_day_subs AS ads
+LEFT JOIN daily_winners AS dw
+    ON ads.submission_date = dw.submission_date
+LEFT JOIN hackers as h
+    ON dw.hacker_id = h.hacker_id
+ORDER BY ads.submission_date ASC;
+
+go
+
+
+/*
+P(R) represents a pattern drawn by Julia in R rows. The following pattern represents P(5):
+
+* 
+* * 
+* * * 
+* * * * 
+* * * * *
+Write a query to print the pattern P(20).
+
+*/
+
+## OUTPUT
+
+DECLARE @i INT = 1;
+WHILE @i <= 20
+BEGIN
+    PRINT replicate('* ', @i);
+    SET @i = @i + 1;
+END;
+
+GO
+/*
+P(R) represents a pattern drawn by Julia in R rows. The following pattern represents P(5):
+
+* * * * * 
+* * * * 
+* * * 
+* * 
+*
+Write a query to print the pattern P(20).
+*/
+
+
+##OUTPUT
+
+DECLARE @i INT = 20;
+WHILE @i >= 1
+BEGIN
+    PRINT replicate('* ', @i);
+    SET @i = @i - 1;
+END
+go
+
+/*
+
+You are given a table, Projects, containing three columns: Task_ID, Start_Date and End_Date.
+It is guaranteed that the difference between the End_Date and the Start_Date is equal to 1 day for each row in the table.
+If the End_Date of the tasks are consecutive, then they are part of the same project.
+Samantha is interested in finding the total number of different projects completed.
+Write a query to output the start and end dates of projects listed by the number 
+of days it took to complete the project in ascending order.
+If there is more than one project that have the same number of completion days, then order by the start date of the project.
+*/
+
+
+## OUTPUT
+
+
+
+ SELECT A.START_DATE,MIN(B.END_DATE) FROM 
+ (
+    SELECT START_DATE FROM PROJECTS WHERE START_DATE NOT IN (
+        SELECT END_DATE FROM PROJECTS 
+    ) 
+ ) AS A
+JOIN
+(
+    SELECT END_DATE FROM PROJECTS WHERE END_DATE NOT IN (
+        SELECT START_DATE FROM PROJECTS
+    ) 
+) AS B
+ON A. START_DATE< B.END_DATE
+GROUP BY A.START_DATE
+ORDER BY DATEDIFF(DAY,A.START_DATE,MIN(B.END_DATE)), A.START_DATE
+go
