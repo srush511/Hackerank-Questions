@@ -83,5 +83,47 @@ for a0 in range(t):
     result = fibonacci(n)
     print(result)
 
+/*
+Problem Statement -03 Largest primefactor
+
+First line contains T, the number of test cases. This is followed by T lines each containing an integer N.
+For each test case, display the largest prime factor of N.
+
+Prime factors of 10  are 2,5 largest is 2.
+Prime factor of 17 is 17 itself, hence largest is 17.
+
+*/
+
+## OUTPUT
+
+#!/bin/python3
+
+import sys
+
+
+t = int(input().strip())
+for a0 in range(t):
+    n = int(input().strip())
+    def primeFactor(n):
+        ans = 0
+        while n % 2 == 0:
+            ans = 2
+            n = n // 2
+        i=3
+        
+        # Loop from 3 to n
+        while i * i <= n:
+            while n % i == 0:
+                ans = i
+                n = n // i
+            i += 2 
+        if n>2:
+            ans=n
+        return ans
+
+
+    answer = primeFactor(n)
+    print(answer)
+    GO
 
 
